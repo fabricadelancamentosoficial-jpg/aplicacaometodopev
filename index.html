@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplicação · Do Plantão ao Milhão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #050D1C;
+    --blue:   #5AB2FF;
+    --blue-2: #2F6BFF;
+    --cyan:   #9EE4FF;
+    --text:   #EAF2FF;
+    --text-2: rgba(234,242,255,0.66);
+    --text-3: rgba(234,242,255,0.42);
+    --glass:  rgba(255,255,255,0.045);
+    --stroke: rgba(158,228,255,0.14);
+    --grad:   linear-gradient(120deg, var(--cyan) 0%, var(--blue) 45%, var(--blue-2) 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased;
+    overflow-x: hidden; position: relative;
+  }
+
+  .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  .glow.a { width: 520px; height: 520px; background: radial-gradient(circle, #2F6BFF 0%, transparent 70%); top: -180px; left: -160px; animation: drift 18s ease-in-out infinite alternate; }
+  .glow.b { width: 460px; height: 460px; background: radial-gradient(circle, #5AB2FF 0%, transparent 70%); bottom: -200px; right: -140px; opacity: .4; animation: drift 22s ease-in-out infinite alternate-reverse; }
+  .glow.c { width: 300px; height: 300px; background: radial-gradient(circle, #9EE4FF 0%, transparent 70%); top: 40%; left: 55%; opacity: .14; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(60px, 40px); } }
+  .grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(158,228,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(158,228,255,0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 70%);
+            mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 70%);
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 26px 20px 60px; }
+  .wrap.wide { max-width: 1000px; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; max-width: 680px; margin-left: auto; margin-right: auto; }
+  .brand { font-weight: 700; font-size: 14px; letter-spacing: .3px; }
+  .brand span { color: var(--text-3); font-weight: 500; }
+  .chip { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; padding: 7px 12px; border-radius: 999px; color: var(--cyan); background: rgba(90,178,255,0.08); border: 1px solid var(--stroke); }
+
+  .screen { display: none; }
+  .screen.on { display: block; animation: rise .5s cubic-bezier(.2,.7,.2,1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kicker { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-2); margin-bottom: 20px; }
+  .kicker i { width: 28px; height: 1px; background: var(--grad); display: block; }
+
+  .hero { margin-bottom: 30px; }
+  .hero h1 { font-size: 40px; line-height: 1.08; font-weight: 800; letter-spacing: -1.3px; margin-bottom: 18px; }
+  .hero p { font-size: 17px; line-height: 1.65; color: var(--text-2); max-width: 560px; }
+
+  .panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+    border: 1px solid var(--stroke); border-radius: 22px; padding: 32px 26px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .panel-title { font-size: 21px; font-weight: 800; letter-spacing: -.5px; line-height: 1.25; margin-bottom: 8px; }
+  .panel-sub { font-size: 15px; color: var(--text-2); line-height: 1.6; margin-bottom: 26px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 16px; }
+  .field > label, .field > .lbl { display: block; font-size: 13.5px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+  .field input, .field textarea {
+    width: 100%; padding: 15px 16px; border-radius: 12px; font-family: inherit; font-size: 15.5px; color: var(--text);
+    background: rgba(5,13,28,0.55); border: 1px solid var(--stroke); outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .field textarea { min-height: 96px; resize: vertical; line-height: 1.55; font-size: 15px; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--text-3); }
+  .field input:focus, .field textarea:focus { border-color: rgba(90,178,255,0.7); box-shadow: 0 0 0 4px rgba(90,178,255,0.12); }
+  .field.bad input, .field.bad .choices { border-color: rgba(255,154,154,0.7); }
+  .field.bad > label, .field.bad > .lbl { color: #FF9A9A; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; border-radius: 12px; }
+  .choice {
+    text-align: left; width: 100%; cursor: pointer; font-family: inherit; font-size: 14.5px; font-weight: 500; color: var(--text);
+    padding: 13px 15px; border-radius: 12px; background: rgba(5,13,28,0.45); border: 1px solid var(--stroke); transition: all .2s;
+  }
+  .choice:hover { border-color: rgba(158,228,255,0.38); }
+  .choice.sel { border-color: rgba(90,178,255,0.75); background: rgba(90,178,255,0.12); box-shadow: 0 0 0 3px rgba(90,178,255,0.10); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+    border: 0; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 15.5px;
+    padding: 17px 30px; border-radius: 14px; color: #04101F; background: var(--grad); margin-top: 8px;
+    box-shadow: 0 10px 40px -10px rgba(90,178,255,0.65), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: transform .15s ease, box-shadow .25s ease, opacity .2s;
+  }
+  .btn:hover { box-shadow: 0 14px 50px -8px rgba(90,178,255,0.85), inset 0 1px 0 rgba(255,255,255,0.4); }
+  .btn:active { transform: scale(.98); }
+  .btn[disabled] { opacity: .6; cursor: wait; }
+  .err { font-size: 13.5px; color: #FF9A9A; margin: 6px 0 4px; display: none; }
+  .lock { font-size: 12.5px; color: var(--text-3); text-align: center; margin-top: 14px; }
+  .hp { position: absolute; left: -9999px; }
+
+  /* agenda */
+  .step-head { max-width: 680px; margin: 0 auto 22px; text-align: center; }
+  .done-mark { width: 64px; height: 64px; margin: 0 auto 22px; border-radius: 50%; display: grid; place-items: center; background: var(--grad); box-shadow: 0 10px 50px -8px rgba(90,178,255,0.8); color: #04101F; font-size: 28px; font-weight: 800; }
+  .step-head h2 { font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1.12; margin-bottom: 12px; }
+  .step-head p { font-size: 16px; line-height: 1.65; color: var(--text-2); max-width: 520px; margin: 0 auto; }
+  .steps { display: flex; justify-content: center; gap: 8px; margin: 22px 0 0; flex-wrap: wrap; }
+  .steps span { font-size: 12.5px; font-weight: 600; color: var(--text-3); padding: 7px 12px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--glass); }
+  .steps span.on { color: var(--cyan); border-color: rgba(90,178,255,0.5); }
+  .cal-box { border-radius: 22px; overflow: hidden; border: 1px solid var(--stroke); background: #fff; }
+  .cal-inline { min-width: 320px; height: 760px; }
+  .cal-alt { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-3); }
+  .cal-alt a { color: var(--text-2); font-weight: 600; }
+
+  .final { text-align: center; padding: 40px 10px 10px; max-width: 560px; margin: 0 auto; }
+  .final h2 { font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1.12; margin-bottom: 14px; }
+  .final p { font-size: 16px; line-height: 1.65; color: var(--text-2); margin-bottom: 12px; }
+
+  .footer { text-align: center; padding: 30px 10px 0; font-size: 12px; color: var(--text-3); }
+
+  @media (max-width: 500px) {
+    .hero h1 { font-size: 31px; letter-spacing: -1px; }
+    .two { grid-template-columns: 1fr; gap: 0; }
+    .panel { padding: 26px 20px; }
+    .step-head h2 { font-size: 27px; }
+    .cal-inline { height: 1000px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg"><div class="grid"></div><div class="glow a"></div><div class="glow b"></div><div class="glow c"></div></div>
+
+<div class="wrap" id="wrap">
+  <div class="top">
+    <div class="brand">Dra. Paula Peres <span>· Método PEV</span></div>
+    <div class="chip">Aplicação</div>
+  </div>
+
+  <!-- 1. APLICAÇÃO -->
+  <section class="screen on" id="s-app">
+    <div class="hero">
+      <div class="kicker"><i></i>Do Plantão ao Milhão</div>
+      <h1>Do plantão ao milhão, <span class="grad-text">sem depender de convênio pra fechar a conta.</span></h1>
+      <p>Para o médico especialista que já é excelente tecnicamente e quer aprender, de verdade, a viver de paciente particular.</p>
+    </div>
+
+    <form class="panel" id="form" novalidate>
+      <div class="panel-title">Vagas limitadas por turma. Critério real de seleção.</div>
+      <div class="panel-sub">Preencha com atenção. Se fizer sentido pro seu momento, nossa equipe entra em contato.</div>
+
+      <div class="two">
+        <div class="field" data-f="nome"><label for="nome">Nome completo</label><input id="nome" autocomplete="name" placeholder="Seu nome"></div>
+        <div class="field" data-f="especialidade"><label for="especialidade">Especialidade</label><input id="especialidade" placeholder="Ex.: Dermatologia"></div>
+      </div>
+      <div class="two">
+        <div class="field" data-f="whatsapp"><label for="whatsapp">WhatsApp</label><input id="whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000"></div>
+        <div class="field" data-f="email"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" placeholder="seu@email.com"></div>
+      </div>
+
+      <div class="field" data-f="consultorio"><div class="lbl">Você já tem consultório próprio?</div><div class="choices" data-name="consultorio"></div></div>
+      <div class="field" data-f="renda"><div class="lbl">Quanto da sua renda vem hoje de convênio e plantão?</div><div class="choices" data-name="renda"></div></div>
+      <div class="field" data-f="faturamento"><div class="lbl">Faturamento mensal aproximado hoje</div><div class="choices" data-name="faturamento"></div></div>
+
+      <div class="field"><label for="trava">O que mais te impede hoje de viver 100% de particular?</label><textarea id="trava" placeholder="Conte em poucas palavras. Isso ajuda a gente a entender seu momento antes da conversa."></textarea></div>
+
+      <input class="hp" type="text" id="hp" tabindex="-1" autocomplete="off">
+      <div class="err" id="err">Preencha os campos marcados para continuar.</div>
+      <button class="btn" type="submit" id="btn">Quero aplicar <span>→</span></button>
+      <div class="lock">Seus dados ficam só com a equipe da Dra. Paula.</div>
+    </form>
+  </section>
+
+  <!-- 2. AGENDA -->
+  <section class="screen" id="s-cal">
+    <div class="step-head">
+      <div class="done-mark">✓</div>
+      <div class="kicker" style="justify-content:center"><i></i>Aplicação recebida</div>
+      <h2 id="cal-title">Agora escolha o horário da sua conversa.</h2>
+      <p>Último passo: marque abaixo o melhor dia e horário para uma conversa com a nossa equipe. É nela que a gente entende o seu momento e vê se o Do Plantão ao Milhão faz sentido pra você.</p>
+      <div class="steps"><span>1 · Aplicação</span><span class="on">2 · Agendar conversa</span></div>
+    </div>
+    <div class="cal-box"><div class="cal-inline" id="cal"></div></div>
+    <div class="cal-alt">A agenda não carregou? <a id="cal-link" href="https://calendly.com/keluska-medmetabrasil" target="_blank" rel="noopener">Abrir em outra aba</a></div>
+  </section>
+
+  <!-- 3. CONFIRMAÇÃO -->
+  <section class="screen" id="s-done">
+    <div class="final">
+      <div class="done-mark">✓</div>
+      <div class="kicker" style="justify-content:center"><i></i>Conversa agendada</div>
+      <h2 id="done-title">Tudo certo.</h2>
+      <p>Você vai receber a confirmação com o horário no seu e-mail.</p>
+      <p>Guarde esse horário com carinho. A nossa equipe chega preparada, já conhecendo a sua aplicação.</p>
+    </div>
+  </section>
+
+  <div class="footer">Do Plantão ao Milhão · Método PEV</div>
+</div>
+
+<script>
+var CONFIG = {
+  calendly: "https://calendly.com/keluska-medmetabrasil",
+  envio: "https://formsubmit.co/ajax/fabricadelancamentosoficial@gmail.com"
+};
+
+var OPTS = {
+  consultorio: ["Sim", "Não", "Parcial, divido espaço"],
+  renda: ["Quase tudo", "Mais da metade", "Uma parte", "Já saí de vez"],
+  faturamento: ["Até R$15 mil", "R$15 a 30 mil", "R$30 a 60 mil", "Acima de R$60 mil"]
+};
+var SEL = {};
+
+var params = {};
+try { new URLSearchParams(location.search).forEach(function (v, k) { params[k] = v; }); } catch (e) {}
+
+function show(id) {
+  var s = document.querySelectorAll(".screen");
+  for (var i = 0; i < s.length; i++) s[i].classList.remove("on");
+  document.getElementById(id).classList.add("on");
+  document.getElementById("wrap").classList.toggle("wide", id === "s-cal");
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+
+(function buildChoices() {
+  var groups = document.querySelectorAll(".choices");
+  for (var g = 0; g < groups.length; g++) {
+    var name = groups[g].getAttribute("data-name"), h = "";
+    for (var i = 0; i < OPTS[name].length; i++) h += '<button type="button" class="choice" data-name="' + name + '" data-i="' + i + '">' + OPTS[name][i] + '</button>';
+    groups[g].innerHTML = h;
+  }
+  var b = document.querySelectorAll(".choice");
+  for (var k = 0; k < b.length; k++) b[k].addEventListener("click", function () {
+    var n = this.getAttribute("data-name");
+    SEL[n] = OPTS[n][+this.getAttribute("data-i")];
+    var sib = this.parentNode.querySelectorAll(".choice");
+    for (var j = 0; j < sib.length; j++) sib[j].classList.toggle("sel", sib[j] === this);
+    this.closest(".field").classList.remove("bad");
+  });
+})();
+
+document.getElementById("whatsapp").addEventListener("input", function (e) {
+  var d = e.target.value.replace(/\D/g, "").slice(0, 11), out = d;
+  if (d.length > 2) out = "(" + d.slice(0, 2) + ") " + d.slice(2);
+  if (d.length > 7) out = "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
+  e.target.value = out;
+});
+var inputs = document.querySelectorAll(".field input");
+for (var x = 0; x < inputs.length; x++) inputs[x].addEventListener("input", function () { this.closest(".field").classList.remove("bad"); });
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+document.getElementById("form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var d = {
+    nome: v("nome"), especialidade: v("especialidade"), whatsapp: v("whatsapp"), email: v("email"),
+    consultorio: SEL.consultorio, renda: SEL.renda, faturamento: SEL.faturamento, trava: v("trava")
+  };
+  var checks = {
+    nome: !!d.nome, especialidade: !!d.especialidade,
+    whatsapp: d.whatsapp.replace(/\D/g, "").length >= 10,
+    email: /.+@.+\..+/.test(d.email),
+    consultorio: !!d.consultorio, renda: !!d.renda, faturamento: !!d.faturamento
+  };
+  var first = null;
+  for (var k in checks) {
+    var f = document.querySelector('[data-f="' + k + '"]');
+    f.classList.toggle("bad", !checks[k]);
+    if (!checks[k] && !first) first = f;
+  }
+  var err = document.getElementById("err");
+  if (first) { err.style.display = "block"; first.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  err.style.display = "none";
+  if (v("hp")) return;
+
+  var btn = document.getElementById("btn");
+  btn.disabled = true; btn.innerHTML = "Enviando...";
+
+  var wa = d.whatsapp.replace(/\D/g, "");
+  var payload = {
+    _subject: "Aplicação Do Plantão ao Milhão: " + d.nome,
+    _template: "table", _captcha: "false",
+    "Nome": d.nome, "Especialidade": d.especialidade, "WhatsApp": d.whatsapp,
+    "Link WhatsApp": "https://wa.me/55" + wa, "E-mail": d.email,
+    "Consultório próprio": d.consultorio, "Renda de convênio e plantão": d.renda,
+    "Faturamento mensal": d.faturamento, "O que mais impede": d.trava || "(não respondeu)",
+    "Origem": Object.keys(params).length ? JSON.stringify(params) : "direto"
+  };
+
+  var go = function () { openCalendly(d); };
+  try {
+    fetch(CONFIG.envio, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) })
+      .then(go, go);
+  } catch (er) { go(); }
+  setTimeout(go, 6000); // não trava a pessoa se o envio demorar
+});
+
+var calOpened = false;
+function openCalendly(d) {
+  if (calOpened) return; calOpened = true;
+  var first = d.nome.split(" ")[0];
+  document.getElementById("cal-title").textContent = first + ", agora escolha o horário da sua conversa.";
+  document.getElementById("done-title").textContent = "Tudo certo, " + first + ".";
+  var url = CONFIG.calendly +
+    "?name=" + encodeURIComponent(d.nome) +
+    "&email=" + encodeURIComponent(d.email) +
+    "&hide_gdpr_banner=1&background_color=ffffff&text_color=0a1830&primary_color=2f6bff";
+  document.getElementById("cal-link").href = url;
+  show("s-cal");
+  var s = document.createElement("script");
+  s.src = "https://assets.calendly.com/assets/external/widget.js"; s.async = true;
+  s.onload = function () {
+    try { Calendly.initInlineWidget({ url: url, parentElement: document.getElementById("cal") }); } catch (e) {}
+  };
+  document.body.appendChild(s);
+}
+
+window.addEventListener("message", function (e) {
+  if (e.origin.indexOf("calendly.com") === -1 || !e.data || !e.data.event) return;
+  if (e.data.event === "calendly.event_scheduled") setTimeout(function () { show("s-done"); }, 2500);
+});
+</script>
+</body>
+</html>
