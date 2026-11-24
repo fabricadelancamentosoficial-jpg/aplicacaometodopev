@@ -206,8 +206,20 @@
 <script>
 var CONFIG = {
   calendly: "https://calendly.com/keluska-medmetabrasil",
-  envio: "https://formsubmit.co/ajax/fabricadelancamentosoficial@gmail.com"
+  envio: "https://formsubmit.co/ajax/fabricadelancamentosoficial@gmail.com",
+  // CRM da Fábrica (Supabase). Chave pública: a página só consegue chamar as funções de aplicação.
+  crmUrl: "https://tueghuueepeoiuquhesp.supabase.co",
+  crmKey: "sb_publishable_Ex_xoNCOBF6KNLK_-4l-LA_XEQjgO45"
 };
+var LEAD_ID = null;
+
+function crm(fn, body) {
+  return fetch(CONFIG.crmUrl + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": CONFIG.crmKey },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.ok ? r.json().catch(function () { return null; }) : null; });
+}
 
 var OPTS = {
   consultorio: ["Sim", "Não", "Parcial, divido espaço"],
@@ -293,10 +305,18 @@ document.getElementById("form").addEventListener("submit", function (e) {
   };
 
   var go = function () { openCalendly(d); };
+  var pending = 2, done = function () { if (--pending === 0) go(); };
   try {
     fetch(CONFIG.envio, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) })
-      .then(go, go);
-  } catch (er) { go(); }
+      .then(done, done);
+  } catch (er) { done(); }
+  try {
+    crm("submit_application", {
+      p_nome: d.nome, p_whatsapp: "55" + wa, p_email: d.email, p_especialidade: d.especialidade,
+      p_consultorio: d.consultorio, p_renda: d.renda, p_faturamento: d.faturamento, p_trava: d.trava,
+      p_origem: payload["Origem"]
+    }).then(function (id) { if (typeof id === "string") LEAD_ID = id; done(); }, done);
+  } catch (er) { done(); }
   setTimeout(go, 6000); // não trava a pessoa se o envio demorar
 });
 
@@ -322,7 +342,10 @@ function openCalendly(d) {
 
 window.addEventListener("message", function (e) {
   if (e.origin.indexOf("calendly.com") === -1 || !e.data || !e.data.event) return;
-  if (e.data.event === "calendly.event_scheduled") setTimeout(function () { show("s-done"); }, 2500);
+  if (e.data.event === "calendly.event_scheduled") {
+    if (LEAD_ID) { try { crm("application_scheduled", { p_id: LEAD_ID }); } catch (er) {} }
+    setTimeout(function () { show("s-done"); }, 2500);
+  }
 });
 </script>
 </body>
